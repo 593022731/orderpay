@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ordersReason">
+
+	<!-- 保存 -->
+	<insert id="saveFeedBackCause" parameterType="com.wei.orderpay.bean.order.OrdersReason">
+		INSERT INTO ordersreason (
+		orderID,
+		source,
+		reasonType,
+		reason
+		) VALUES (
+		#{orderID},
+		#{source},
+		#{reasonType},
+		#{reason}
+		)
+	</insert>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</mapper>

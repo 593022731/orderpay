@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="ServiceRemit" >
+	
+	<!-- 根据id查询业务订单对象 -->
+	<select id="getServiceRemitByID" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.order.ServiceRemit">
+		SELECT * FROM serviceremit WHERE id= #{id} AND source = #{source}
+	</select>
+	
+	<!-- 查询业务订单 -->
+	<select id="getServiceRemitListByOrderID" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.order.ServiceRemit">
+		SELECT * FROM serviceremit WHERE orderID = #{orderID} AND source = #{source}
+	</select>
+	
+	<!-- 保存业务订单 -->
+	<insert id="saveServiceRemit" parameterType="com.wei.orderpay.bean.order.ServiceRemit">
+		INSERT INTO serviceremit (
+			  orderID,
+			  source,
+			  supplierName,
+			  cardNo,
+			  bankName,
+			  provinceName,
+			  cityName,
+			  voucherPics,
+			  productIds,
+			  totalAmount,
+			  tradeNo
+			) 
+				VALUES
+			(
+			#{orderID ,jdbcType=NUMERIC} ,
+			#{source ,jdbcType=NUMERIC} ,
+			#{supplierName ,jdbcType=VARCHAR} ,
+			#{cardNo ,jdbcType=VARCHAR} ,
+			#{bankName ,jdbcType=VARCHAR} ,
+			#{provinceName ,jdbcType=VARCHAR} ,
+			#{cityName ,jdbcType=VARCHAR} ,
+			#{voucherPics ,jdbcType=VARCHAR} ,
+			#{productIds ,jdbcType=VARCHAR} ,
+			#{totalAmount ,jdbcType=NUMERIC} ,
+			#{tradeNo ,jdbcType=VARCHAR} 
+			)
+			<selectKey keyProperty="id" resultType="INTEGER">
+				SELECT
+				LAST_INSERT_ID()
+			</selectKey>
+	</insert>
+	
+	<!-- 获取没有添加配件商账户 的商品 数量大于0 表示为完善 等于0 则需要 更新 -->
+	<select id="getNotAddCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+		SELECT 
+		  COUNT(1) 
+		FROM
+		  orderdetail 
+		WHERE orderID = #{orderID}
+		  AND source = #{source} 
+		  AND productID NOT IN 
+		  (SELECT 
+		    GROUP_CONCAT(productIds) 
+		  FROM
+		    serviceremit 
+		  WHERE orderID = #{orderID} 
+		    AND source = #{source}) 
+	</select>
+	
+	<!-- 更新为已完善状态 -->
+	<insert id="updateAccountStatus" parameterType="java.util.Map">
+		 INSERT INTO serviceorderstatus (
+			orderID ,
+			source ,
+			status 
+		 )
+		 VALUES (
+			#{orderID} ,
+			#{source} ,
+			1
+		 )
+	</insert>
+	
+	<!-- 查询业务汇款表 -->
+	<select id="getServiceRemitListByParas" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.order.ServiceRemit">
+		SELECT 
+		  o.orderCode orderCode,
+		  od.guid guid,
+		  sr.* 
+		FROM
+		  serviceremit sr 
+		  LEFT JOIN
+		  orders o 
+		  ON sr.orderID = o.orderID 
+		  LEFT JOIN
+		  orderdetail od 
+		  ON o.orderID = od.orderID 
+		<where>
+			<if test="orderCode !=null ">
+				AND o.orderCode = #{orderCode}
+			</if>
+			<if test="supplierName !=null ">
+				AND sr.supplierName = LIKE CONCAT('%', #{supplierName} ,'%' )  
+			</if>
+			<if test="startDT !=null ">
+				AND DATE_FORMAT(sr.createDT, '%Y-%m-%d') >= #{startDT}
+			</if>
+			<if test="endDT !=null ">
+				AND #{endDT} >= DATE_FORMAT(sr.createDT, '%Y-%m-%d') 
+			</if>
+			<if test="source > 0 ">
+				AND sr.source = #{source}
+			</if>
+			<if test="status > -1 ">
+				AND sr.status = #{status}
+			</if>
+			<if test="guids != null ">
+				AND od.guid IN 
+				<foreach collection="guids" item="guid" open="(" close=")" separator=",">
+		            #{guid}
+		        </foreach>
+	        </if>
+		</where>
+		ORDER BY sr.createDT DESC
+		LIMIT #{pageNo},#{pageSize}
+
+	</select>
+	
+	<update id="updateServiceRemit4Success" parameterType="java.util.Map" >
+		UPDATE serviceremit
+		SET STATUS = 1,
+		 	updateDT = NOW()
+		WHERE
+			id = #{id}
+		AND source = #{source}
+		AND STATUS != 1
+	</update>
+	
+	<update id="updateServiceRemit4Fail" parameterType="java.util.Map" >
+		UPDATE serviceremit
+		SET STATUS = 2,
+		 	updateDT = NOW()
+		WHERE
+			id = #{id}
+		AND source = #{source}
+
+	</update>
+	
+	
+</mapper>

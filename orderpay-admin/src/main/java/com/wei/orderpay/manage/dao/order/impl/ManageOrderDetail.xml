@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="OrderDetailCommon" >
+	
+	<!-- 查询订单详情 -->
+	<select id="getOrderDetails" parameterType="java.util.Map" resultType="OrderDetailBean">
+		select * from orderdetail where orderID = #{orderID} and source = #{source}
+	</select>
+	
+	<!-- 查询订单卖家uid -->
+	<select id="getSellerUid" parameterType="java.util.Map" resultType="java.lang.Integer">
+		select guid from orderdetail where orderID = #{orderID} and source = #{source} limit 1
+	</select>
+	
+</mapper>

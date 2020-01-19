@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="OrderCommon">
+	
+		
+	<!-- 查询订单对象 by orderID-->
+	<select id="getOrdersManage" parameterType="java.util.Map" resultType="com.wei.orderpay.manage.bean.order.OrdersBean">
+		select * from orders where orderID = #{orderID} and source = #{source}
+	</select>
+	
+	<!-- 查询订单对象 by orderID-->
+	<select id="getOrders" parameterType="java.util.Map" resultType="OrdersBean">
+		select * from orders where orderID = #{orderID} and source = #{source}
+	</select>
+	
+	<!-- 查询订单对象 by orderCode -->
+	<select id="getOrdersByOrderCode" parameterType="java.util.Map" resultType="OrdersBean">
+		select * from orders where orderCode = #{orderCode} and source = #{source}
+	</select>
+
+	<!-- 修改订单状态 -->
+	<update id="updateOrderStatus" parameterType="java.util.Map">
+		update orders set
+		status = #{newStatus},statusDT=#{statusDT} where orderID = #{orderID}
+		and source = #{source} and guid = #{guid} and status = #{oldStatus}
+	</update>
+
+	<!-- 买家逻辑查询-->
+	<select id="getBuyerOrderList4Buyer" parameterType="java.util.Map" resultType="OrdersBean">
+		select * from orders where source = #{source} and buyerDelete = 0
+		and guid in 
+		<foreach collection="guids" item="guids" open="(" close=")" separator=",">
+            #{guids}
+        </foreach>
+		<if test="createStartDT != null">
+			and DATE_FORMAT(createDT,'%Y-%m-%d') >= #{createStartDT}
+		</if>
+		<if test="createEndDT != null">
+			and #{createEndDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		<if test="status > 0">
+			and status = #{status}
+		</if>
+		order by createDT desc
+		limit #{page},#{pageSize}
+	</select>
+	
+	<!-- 卖家逻辑查询 -->
+	<select id="getBuyerOrderList4Seller" parameterType="java.util.Map" resultType="OrdersBean">
+		select * from orders where source = #{source} and buyerDelete = 0
+		and orderID in 
+		(SELECT DISTINCT orderID FROM orderdetail 
+		WHERE source = #{source} and guid in 
+		<foreach collection="guids" item="guids" open="(" close=")" separator=",">
+            #{guids}
+        </foreach>)
+		<if test="createStartDT != null">
+			and DATE_FORMAT(createDT,'%Y-%m-%d') >= #{createStartDT}
+		</if>
+		<if test="createEndDT != null">
+			and #{createEndDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		<if test="status > 0">
+			and status = #{status}
+		</if>
+		order by createDT desc
+		limit #{page},#{pageSize}
+	</select>
+	
+	<!-- 无逻辑查询 -->
+	<select id="getOrderByNull4Manage" parameterType="java.util.Map" resultType="OrdersBean">
+		select * from orders where source = #{source} and buyerDelete = 0
+		<if test="createStartDT != null">
+			and DATE_FORMAT(createDT,'%Y-%m-%d') >= #{createStartDT}
+		</if>
+		<if test="createEndDT != null">
+			and #{createEndDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		<if test="status > 0">
+			and status = #{status}
+		</if>
+		order by createDT desc
+		limit #{page},#{pageSize}
+	</select>
+	
+	<!-- 后台订单跟进查询逻辑 -->
+	<select id="getOrderCodesByStatusAndFollowMark" parameterType="java.util.Map" resultType="java.lang.String">
+		select orderCode from orders where source = #{source} and followMark = #{followMark}
+		and status in
+		<foreach collection="statuses" item="statuses" open="(" close=")" separator=",">
+            #{statuses}
+        </foreach>
+		order by createDT desc
+		limit 1 for update
+	</select>
+	
+	<!-- 根据订单Code 更新后台客服跟进标识 -->
+	<update id="updateFollowMarkByOrderCode" parameterType="java.lang.String">
+		UPDATE orders SET
+			followMark = 1 
+		WHERE 
+			orderCode=#{orderCode} 
+		and
+			followMark = 0
+	</update>
+	
+	<!-- 定时更新后台客服跟进标识 -->
+	<update id="updateFollowMark4Quartz" parameterType="java.util.HashMap">
+		UPDATE orders SET
+			followMark = 0 
+		WHERE 
+			status in
+		<foreach collection="statuses" item="statuses" open="(" close=")" separator=",">
+            #{statuses}
+        </foreach>
+		and
+			followMark = 1
+	</update>
+	
+	<!-- 超过24小时没支付的订单 -->
+	<select id="getOrdersUnpaidOver24h" parameterType="java.util.Map" resultType="OrdersBean">
+		select orderID, guid from orders where source = #{source} and status = #{orderStatus} and DATE_SUB(NOW(),INTERVAL 1 DAY) > createDT 
+	</select>
+	
+	<!-- 账单管理交易查询 -->
+	<select id="getDealList" parameterType="java.util.HashMap" resultType="java.util.Map">
+		SELECT a.*,b.guid AS sellerGuid ,c.recordCode,c.charge FROM orders a,orderdetail b ,useraccounttransactionlog c 
+		WHERE a.source = #{source} and a.orderID = b.orderID
+		AND a.orderID = c.resourceID AND c.userAccountTransactionType = #{userAccountTransactionType}
+		<if test="recordCode != null">
+			AND c.recordCode = #{recordCode}
+		</if>
+		<if test="listBuyer != null">
+			AND a.guid IN 
+			<foreach collection="listBuyer" item="buyer" open="(" close=")" separator=",">
+				#{buyer}
+			</foreach>
+		</if>
+		<if test="listSeller != null">
+			AND b.guid IN 
+			<foreach collection="listSeller" item="seller" open="(" close=")" separator=",">
+				#{seller}
+			</foreach>
+		</if>
+		<if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(a.createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(a.createDT,'%Y-%m-%d')
+		</if>
+		order by a.createDT desc
+		LIMIT #{page},#{pageSize}
+	</select>
+	
+	<!-- 只修改订单状态时间 (提现发货逻辑)-->
+	<update id="updateOrderStatusDT" parameterType="java.util.Map">
+		update orders set statusDT=now() where orderID = #{orderID} and source = #{source} and status = #{status} and guid = #{guid}
+	</update>
+	
+	<!-- =================================================================================业务订单相关处理  begin===================================================== -->
+	
+	<!-- 根据订单号查询 业务订单   -->
+	<select id="getServiceOrderByOrderCode" parameterType="java.util.Map" resultType="ServiceOrderBean">
+		
+		SELECT *, s.STATUS AS serviceOrderStatus
+		FROM orders AS o
+	    LEFT JOIN serviceorderstatus AS s ON o.orderID = s.orderID
+		WHERE
+		o.source = #{source}
+		AND o.orderID = #{orderID}
+		<if test="createStartDT != null">
+			and DATE_FORMAT(o.createDT,'%Y-%m-%d') >= #{createStartDT}
+		</if>
+		<if test="createEndDT != null">
+			and #{createEndDT} >= DATE_FORMAT(o.createDT,'%Y-%m-%d')
+		</if>
+		<if test="accountStatus == 0">
+			 and NOT EXISTS (select orderID from serviceorderstatus where status = 1)
+		</if>
+		<if test="accountStatus == 1">
+			 and EXISTS (select orderID from serviceorderstatus where status = 1)
+		</if>
+	</select>
+	
+	<!-- 根据条件查询出业务人员的订单  -->
+	<select id="getServiceOrders" parameterType="java.util.Map" resultType="ServiceOrderBean">
+		select *, s.STATUS AS serviceOrderStatus
+		FROM  orders AS o 
+		LEFT JOIN serviceorderstatus AS s ON o.orderID = s.orderID
+		where o.source = #{source} 
+		AND  o.status in
+		<foreach collection="statuses" item="statuses" open="(" close=")" separator=",">
+            #{statuses}
+        </foreach>
+		
+		<if test="buyerGuids != null">
+			and o.guid in 
+			<foreach collection="buyerGuids" item="guid" open="(" close=")" separator=",">
+	            #{guid}
+	        </foreach>
+		</if>
+		and o.orderID in 
+		(SELECT DISTINCT od.orderID FROM orderdetail AS  od
+		WHERE od.source = #{source} and od.guid in 
+		<foreach collection="servicerGuids" item="guid" open="(" close=")" separator=",">
+            #{guid}
+        </foreach>)
+		<if test="createStartDT != null">
+			and DATE_FORMAT(o.createDT,'%Y-%m-%d') >= #{createStartDT}
+		</if>
+		<if test="createEndDT != null">
+			and #{createEndDT} >= DATE_FORMAT(o.createDT,'%Y-%m-%d')
+		</if>
+		<if test="accountStatus == 0">
+			 and o.orderID NOT IN (select orderID from serviceorderstatus where status = 1)
+		</if>
+		<if test="accountStatus == 1">
+			 and o.orderID IN (select orderID from serviceorderstatus where status = 1)
+		</if>
+		order by o.createDT desc
+		limit #{page},#{pageSize}
+	</select>
+	
+	<!-- =================================================================================业务订单相关处理 end===================================================== -->
+	
+	
+	<!-- 人脉通自定义查询 -->
+	
+	<resultMap type="com.wei.orderpay.manage.bean.order.OrdersBean" id="ordersBeanResultMap">
+		<id property="orderID" column="orderID"/>
+		<result property="orderCode" column="orderCode"/> 
+		<result property="orderPayCode" column="orderPayCode"/>
+		<result property="payType" column="payType"/>
+		<result property="amount" column="amount"/>
+		<result property="actualPayment" column="actualPayment"/>
+		<result property="createDT" column="createDT"/>
+		<result property="guid" column="guid"/>
+		<result property="memo" column="memo"/>
+		<result property="recepientID" column="recepientID"/>
+		<result property="status" column="status"/>
+		<result property="updateDT" column="updateDT"/>
+		<result property="statusDT" column="statusDT"/> 
+		<association property="recepient" column="recepientID" select="findRecepientById" />  
+		<collection property="orderTransactionLogs" column="orderID" select="getOrderTransactionLogs" />   
+		<collection property="orderDetails" column="orderID" select="getOrderDetails" /> 
+		<collection property="orderLogistics" column="orderID" select="getOrderLogisticsByOrderID" /> 
+		<collection property="refunds" column="orderID" select="getRefundsByOrderID" /> 
+		<collection property="operatLogs" column="orderID" select="findOrderOperationLog" /> 
+	</resultMap>
+	
+	<!-- 查询退款 -->
+	<select id="getRefundsByOrderID" parameterType="java.util.Map" resultType="RefundBean">
+		SELECT
+			*
+		FROM
+			refund
+		WHERE
+			orderID = #{orderID}
+	</select>
+	
+	<!--根据OrderID 查询 物流信息 -->
+	<select id="getOrderLogisticsByOrderID" parameterType="Integer" resultType="com.wei.orderpay.manage.bean.order.OrderLogisticsBean">
+		select * from orderlogistics where orderID = #{orderID}
+	</select>
+	<!-- 查询订单详情 -->
+	<select id="getOrderDetails" parameterType="Integer" resultType="com.wei.orderpay.manage.bean.order.OrderDetailBean">
+		select * from orderdetail where orderID = #{orderID} 
+	</select>
+	
+	<!-- 查询订单变更状态记录  Fix  SELECT STATUS,createDT  to *-->
+	<select id="getOrderTransactionLogs" parameterType="Integer" resultType="com.wei.orderpay.manage.bean.order.OrderTransactionLogBean">
+		SELECT * FROM ordertransactionlog where orderID = #{orderID} 
+	</select>
+	
+	<select id="findRecepientById" parameterType="Integer" resultType="com.wei.orderpay.manage.bean.user.RecepientBean">
+		select * from recepient where recepientID  = #{id}
+	</select>
+	
+	<select id="findOrderOperationLog" parameterType="Integer" resultType="com.wei.orderpay.manage.bean.order.OrderOperationLogBean">
+		select * from orderoperationlog where orderID  = #{id}
+	</select>
+	
+	<select id="getOrderList" parameterType="java.util.Map" resultMap="ordersBeanResultMap">
+		select * from orders join orderdetail on orders.orderID = orderdetail.orderID where orders.source = #{source} and orderdetail.source = #{source}
+		<if test="productIDList != null and productIDList.size()>0"  > <!-- 商品ID -->
+			and orderdetail.productID in
+			<foreach collection="productIDList" item="productIDList" open="(" close=")" separator=",">
+           	 	#{productIDList}
+      		</foreach>
+		</if>
+		<if test="userBidIDList != null and userBidIDList.size()>0" > <!-- 报价ID -->
+			and orderdetail.userBidID  in
+			<foreach collection="userBidIDList" item="userBidIDList" open="(" close=")" separator=",">
+           	 	#{userBidIDList}
+      		</foreach>
+		</if>
+		<if test="productOrBid == 1"> <!-- 商品 -->
+			and orderdetail.productID > 0
+		</if>
+		<if test="productOrBid == 2"> <!-- 报价 -->
+			and orderdetail.userBidID > 0
+		</if>
+		<if test="orderCode != null and orderCode != '' ">
+			and orders.orderCode = #{orderCode} 
+		</if>
+		<if test="guid != null and guid != ''">
+			and (orders.guid = #{guid} or orderdetail.guid = #{guid}) 
+		</if>
+		<if test="createStartDT != null and createStartDT != ''">
+			and DATE_FORMAT(orders.createDT,'%Y/%m/%d %H:%i') >= #{createStartDT}
+		</if>
+		<if test="createEndDT != null and createEndDT != ''">
+			and #{createEndDT} >= DATE_FORMAT(orders.createDT,'%Y/%m/%d %H:%i')
+		</if>
+		<if test="status > 0">
+			and orders.status = #{status}
+		</if>
+		<if test="type != null and type > -1">
+			and orders.type = #{type}
+		</if>
+		group by orders.orderID 
+		order by orders.createDT desc 
+		limit #{page},#{pageSize}
+	</select>
+	
+	<select id="getOrderListCount" parameterType="java.util.Map" resultType="Integer">
+		select count(DISTINCT orders.orderID) from orders join orderdetail on orders.orderID = orderdetail.orderID where orders.source = #{source} and orderdetail.source = #{source}
+		<if test="productIDList != null and productIDList.size()>0"  > <!-- 商品ID -->
+			and orderdetail.productID in
+			<foreach collection="productIDList" item="productID" open="(" close=")" separator=",">
+           	 	#{productID}
+      		</foreach>
+		</if>
+		<if test="userBidIDList != null and userBidIDList.size()>0" > <!-- 报价ID -->
+			and orderdetail.userBidID  in
+			<foreach collection="userBidIDList" item="userBidID" open="(" close=")" separator=",">
+           	 	#{userBidID}
+      		</foreach>
+		</if>
+		<if test="productOrBid == 1"> <!-- 商品 -->
+			and orderdetail.productID > 0
+		</if>
+		<if test="productOrBid == 2"> <!-- 报价 -->
+			and orderdetail.userBidID > 0
+		</if>
+		<if test="orderCode != null and orderCode != '' ">
+			and orders.orderCode = #{orderCode} 
+		</if>
+		<if test="guid != null and guid != ''">
+			and (orders.guid = #{guid} or orderdetail.guid = #{guid}) 
+		</if>
+		<if test="createStartDT != null and createStartDT != ''">
+			and DATE_FORMAT(orders.createDT,'%Y/%m/%d %H:%i') >= #{createStartDT}
+		</if>
+		<if test="createEndDT != null and createEndDT != ''">
+			and #{createEndDT} >= DATE_FORMAT(orders.createDT,'%Y/%m/%d %H:%i')
+		</if>
+		<if test="status > 0">
+			and orders.status = #{status}
+		</if>
+		<if test="type != null and type > -1">
+			  and orders.type = #{type}
+		</if>
+	</select>
+</mapper>
+
+
+
+

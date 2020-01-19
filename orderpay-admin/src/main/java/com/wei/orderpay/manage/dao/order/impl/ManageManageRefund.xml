@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="ManageRefundBeanCommon" >
+	
+	<select id="getRefundInfo" parameterType="java.util.Map" resultType="com.wei.orderpay.manage.bean.order.ManageRefundBean">
+		SELECT o.orderID,o.orderCode,o.orderPayCode,r.amount as refundFee,o.guid,o.payType,r.flag,r.createDT,r.updateDT FROM refund r,orders o
+		 WHERE r.orderID = o.orderID AND r.source = #{source} AND r.agree = 1
+		 <if test="orderCode != null">
+		 	and o.orderCode = #{orderCode}
+		 </if>
+		 <if test="orderPayCode != null">
+		 	and o.orderPayCode = #{orderPayCode}
+		 </if>
+		 <if test="flag != null">
+		 	and r.flag = #{flag}
+		 </if>
+		 <if test="buyerUids != null">
+		 	AND o.guid IN 
+			<foreach collection="buyerUids" item="userID" open="(" close=")" separator=",">
+				#{userID}
+			</foreach>
+		</if>	
+		<if test="startDT != null">
+			AND DATE_FORMAT(r.createDT,'%Y-%m-%d') >= #{startDT}
+		</if>
+		<if test="endDT != null">
+			and #{endDT} >= DATE_FORMAT(r.createDT,'%Y-%m-%d')
+		</if>
+		ORDER BY r.createDT DESC
+		LIMIT #{page},#{pageSize}
+	</select>
+	
+	<select id="getAliRefundInfo" parameterType="java.util.Map" resultType="com.wei.orderpay.manage.bean.order.ManageRefundBean">
+		SELECT t.amount as refundFee,p.tradeNO FROM (
+			SELECT 
+			  o.orderPayCode,
+			  r.amount
+			FROM
+			  refund r,
+			  orders o 
+			WHERE r.orderID = o.orderID 
+			  AND r.source = #{source} and r.flag = 0
+			  AND r.agree = 1 AND o.payType = #{payType}
+		<if test="orderIDList != null and orderIDList.size()>0" >  
+			and o.orderID  in
+			<foreach collection="orderIDList" item="orderIDList" open="(" close=")" separator=",">
+           	 	#{orderIDList}
+      		</foreach>
+		</if>
+			 ) t,orderpaylog p WHERE t.orderPayCode = p.orderPayCode
+		
+	</select>
+</mapper>

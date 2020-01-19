@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="UserAccountCommon">
+
+	<!-- 保存 -->
+	<insert id="saveUserAccount" parameterType="com.wei.orderpay.manage.bean.user.UserAccountBean">
+		INSERT INTO useraccount (
+		guid,
+		balance,
+		source
+		) VALUES (
+		#{guid},
+		#{balance},
+		#{source}
+		)
+		<selectKey keyProperty="userAccountID" resultType="INTEGER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+	<select id="getUserAccountForUpdate" parameterType="java.util.Map" resultType="com.wei.orderpay.manage.bean.user.UserAccountBean">
+		SELECT
+		*
+		FROM
+		useraccount
+		WHERE
+		source = #{source} and guid = #{guid} 
+		FOR UPDATE
+	</select>
+
+	<!-- 更改账户余额-->
+	<update id="updateBalance" parameterType="java.util.Map" >
+	    update useraccount set balance = #{balance} where guid = #{guid} and source = #{source}  and balance >= 0
+  	</update>
+  	
+</mapper>

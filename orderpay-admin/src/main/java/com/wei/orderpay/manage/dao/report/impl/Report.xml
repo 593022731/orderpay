@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="Report">
+	
+	<!-- 获取指定日期间每日 订单总额 -->
+	 <select id="getTotalOrderAmount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day,CONCAT(sum(amount*100)/100,'')  as total  from orders where source = #{source} 
+	 	  AND TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日  已付款订单总额 -->
+	 <select id="getTotalPayOrderAmount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day,CONCAT(sum(amount*100)/100,'')  as total  from orders where source = #{source} AND status>1  AND status!=8<!-- 1 为待付款 只要付过款 不管退款与否 都算 -->
+		 AND TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 订单总数 -->
+	 <select id="getTotalOrderCount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day,count(*)  as total  from orders where source = #{source}
+		 AND TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 已付款订单总数 -->
+	 <select id="getTotalPayOrderCount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day,count(*) as total  from orders where source = #{source} AND status>1 AND status!=8 <!-- 1 为待付款 只要付过款 不管退款与否 都算 -->
+		 AND TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d') 
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 商品订单总数 -->
+	 <select id="getTotalProductOrderCount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(d.createDT,'%Y%m%d') day,count(DISTINCT(d.orderID))  as total  from orderdetail  d join orders o on o.orderID = d.orderID where  o.status in('2','3','4','5','6','7') AND o.source = #{source} AND d.productID > 0
+		 AND o.TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(d.createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(d.createDT,'%Y-%m-%d') 
+		</if>
+		GROUP BY DATE_FORMAT(d.createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 报价订单总数 -->
+	 <select id="getTotalBidOrderCount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(d.createDT,'%Y%m%d') day,count(DISTINCT(d.orderID))  as total  from orderdetail d join orders o on o.orderID = d.orderID where o.status>1 AND o.status != 8 AND o.source = #{source} AND d.userBidID > 0
+		 AND o.TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(d.createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(d.createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(d.createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 已取消订单总数 -->
+	 <select id="getTotalCancelOrderCount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day,count(*)  as total  from orders where source = #{source} AND status = 8
+		 AND TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 支付宝支付订单总数 -->
+	 <select id="getTotalAliPayOrderCount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day,count(*) as total  from orders where status>1 AND status!=8 AND source = #{source} AND payType = 1
+		 AND TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 微信支付订单总数 -->
+	 <select id="getTotalWXPayOrderCount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day, count(*)   as total  from orders where status>1 AND status!=8 AND source = #{source}  AND payType = 2
+		 AND TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 银联支付订单总数 -->
+	 <select id="getTotalChinaPayOrderCount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day, count(*)   as total  from orders where   status>1 AND status!=8 AND source = #{source}  AND payType = 3
+		 AND TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日  已退款订单总数 -->
+	  <select id="getTotalRefundOrderCount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day,count(*)  as total  from orders where source = #{source} AND status = 6
+		  AND TYPE = #{type}
+		  <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 已退款订单总额 -->
+	  <select id="getTotalRefundOrderAmount" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day,CONCAT(sum(amount*100)/100,'')  as total  from orders where source = #{source} AND status = 6
+		  AND TYPE = #{type}
+		  <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	 <!-- 获取指定日期间每日 客单价 -->
+	  <select id="getTotalCustomerPrice" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(createDT,'%Y%m%d') day,CONCAT(round(sum(amount*100)/100/count(*),2),'')  as total  from orders where status>1 AND status!=8 AND source = #{source}
+		  AND TYPE = #{type}
+		  <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+	 
+	   
+	  <!-- 获取指定日期间每日 已付款指定商品分类订单数-->
+	 <select id="getPayedProductCategoryReports" parameterType="java.util.HashMap" resultType="java.util.HashMap" >
+	 	select DATE_FORMAT(d.createDT,'%Y%m%d') day,count(*)  as total  from orderdetail d,orders o where d.orderID = o.orderID AND o.status>1 AND o.status!=8 AND d.source = #{source} and d.categoryId = #{categoryId}
+		 AND o.TYPE = #{type}
+		 <if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(d.createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(d.createDT,'%Y-%m-%d')
+		</if>
+		GROUP BY DATE_FORMAT(d.createDT,'%Y%m%d') ORDER BY day  
+	 </select>
+</mapper>
+
+
+
+

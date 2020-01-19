@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="UserAccountTransactionLogCommon" >
+	
+	<!-- 保存 -->
+	<insert id="saveUserAccountTransactionLog" parameterType="com.wei.orderpay.bean.user.UserAccountTransactionLogBean" >
+		INSERT INTO useraccounttransactionlog (
+			userAccountID,
+			userAccountTransactionType,
+			resourceID,
+			balance,
+			charge,
+			source,
+			<if test="productName != null and productName != ''">
+				productName,
+			</if>
+			recordCode
+
+		) VALUES (
+			#{userAccountID},
+			#{userAccountTransactionType},
+			#{resourceID},
+			#{balance},
+			#{charge},
+			#{source},
+			<if test="productName != null and productName != ''">
+				#{productName},
+			</if>
+			#{recordCode}
+		)
+	</insert>
+	
+	<select id="getUserAccountTransactionLog" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.user.UserAccountTransactionLogBean">
+		SELECT l.* FROM useraccounttransactionlog l,useraccount u WHERE l.userAccountID = u.userAccountID AND u.guid =#{guid} AND l.source = u.source AND l.source = #{source}
+		ORDER BY l.id DESC LIMIT #{page},#{pageSize}
+	</select>
+</mapper>

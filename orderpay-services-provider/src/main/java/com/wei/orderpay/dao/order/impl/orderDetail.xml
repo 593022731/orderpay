@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="OrderDetailCommon" >
+	
+	<!-- 保存 -->
+	<insert id="saveOrderDetail" parameterType="com.wei.orderpay.bean.order.OrderDetailBean" >
+		INSERT INTO orderdetail (
+			orderID,
+			guid,
+			storeID,
+			productID,
+			userBidID,
+			categoryID,
+			quantity,
+			qPrice,
+			<if test="postage != null and postage>0">
+				postage,
+			</if>
+			<if test="promoteId != null and promoteId>0">
+				promoteId,
+			</if>
+			<if test="sellMoney != null and sellMoney>0">
+				sellMoney,
+			</if>
+			<if test="sellMoneyDiscount != null and sellMoneyDiscount>0">
+				sellMoneyDiscount,
+			</if>
+			source
+		) VALUES (
+			#{orderID},
+			#{guid},
+			#{storeID},
+			#{productID},
+			#{userBidID},
+			#{categoryID},
+			#{quantity},
+			#{qPrice},
+			<if test="postage != null and postage>0">
+				#{postage},
+			</if>
+			<if test="promoteId != null and promoteId>0">
+				#{promoteId},
+			</if>
+			<if test="sellMoney != null and sellMoney>0">
+				#{sellMoney},
+			</if>
+			<if test="sellMoneyDiscount != null and sellMoneyDiscount>0">
+				#{sellMoneyDiscount},
+			</if>
+			#{source}
+		)
+	</insert>
+	
+	<!-- 查询卖家所有订单id -->
+	<select id="getSellerOrderIDs" parameterType="java.util.Map" resultType="java.lang.Integer">
+		select orderID from orderdetail where guid = #{guid} and source = #{source}
+	</select>
+	
+	<!-- 查询订单详情 -->
+	<select id="getOrderDetails" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.order.OrderDetailBean">
+		select * from orderdetail where orderID = #{orderID} and source = #{source}
+	</select>
+	
+	<!-- 查询订单卖家uid -->
+	<select id="getSellerUid" parameterType="java.util.Map" resultType="java.lang.Integer">
+		select guid from orderdetail where orderID = #{orderID} and source = #{source} limit 1
+	</select>
+	
+	<!-- 查询订单详情 根据orderID  -->
+	<select id="getOrderDetailByOrderID" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.order.OrderDetailBean">
+		select * from orderdetail where orderID = #{orderID} and source = #{source}
+	</select>
+	
+</mapper>

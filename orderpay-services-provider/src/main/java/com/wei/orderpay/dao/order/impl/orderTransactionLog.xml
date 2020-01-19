@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="OrderTransactionLogCommon" >
+	
+	<insert id="saveOrderTransactionLog" parameterType="com.wei.orderpay.bean.order.OrderTransactionLogBean" >
+		INSERT INTO ordertransactionlog (
+			orderID,
+			source,
+			status
+		) VALUES (
+			#{orderID},
+			#{source},
+			#{status}
+		)
+	</insert>
+	
+	<!-- 查询订单变更状态记录  Fix  SELECT STATUS,createDT  to *-->
+	<select id="getOrderTransactionLogs" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.order.OrderTransactionLogBean">
+		SELECT * FROM ordertransactionlog where orderID = #{orderID} and source = #{source}
+	</select>
+</mapper>

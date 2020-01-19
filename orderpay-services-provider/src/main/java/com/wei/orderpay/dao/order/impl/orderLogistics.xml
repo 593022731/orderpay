@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="OrderLogisticsCommon" >
+	
+	<insert id="saveOrderLogistics" parameterType="com.wei.orderpay.bean.order.OrderLogisticsBean" >
+		INSERT INTO orderlogistics (
+			orderID,
+			guid,
+			<if test="deliveryNo != null">
+				deliveryNo,
+			</if>
+			<if test="voucherPics != null">
+				voucherPics,
+			</if>
+			source
+		) VALUES (
+			#{orderID},
+			#{guid},
+			<if test="deliveryNo != null">
+				#{deliveryNo},
+			</if>
+			<if test="voucherPics != null">
+				#{voucherPics},
+			</if>
+			#{source}
+		)
+	</insert>
+	
+	<!--根据OrderID 查询 物流信息 -->
+	<select id="getOrderLogisticsByOrderID" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.order.OrderLogisticsBean">
+		select * from orderlogistics where orderID = #{orderID} AND  source = #{source}
+	</select>
+	
+	
+	<update id="updateOrderLogistics" parameterType="com.wei.orderpay.bean.order.OrderLogisticsBean" >
+		update orderlogistics set orderID = orderID
+			<if test="deliveryNo != null">
+				,deliveryNo = #{deliveryNo}
+			</if>
+			<if test="voucherPics != null">
+				,voucherPics = #{voucherPics}
+			</if>
+		where id = #{id}
+	</update>
+	
+	<!--根据OrderID 查询 物流信息 -->
+	<select id="getOrderLogisticList" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.order.OrderLogisticsBean">
+		select * from orderlogistics where orderID = #{orderID}
+	</select>
+	
+</mapper>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	 xmlns:aop="http://www.springframework.org/schema/aop"
+  	xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd http://www.springframework.org/schema/tx
+         http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+         http://www.springframework.org/schema/aop 
+         http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+	
+    <bean id="dataSourceOrderAdmin" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		  <!-- C3P0连接池配置解决MySQL连接的空闲时间超过8小时后自动断开连接的问题  -->
+		<property name="preferredTestQuery" value="select 1"></property>
+		
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl" value="jdbc:mysql://${ip.order}:${port.order}/${dbname.order}?user=${username.order}&amp;password=${password.order}&amp;useUnicode=true&amp;characterEncoding=utf8&amp;autoReconnect=true&amp;failOverReadOnly=false&amp;zeroDateTimeBehavior=convertToNull" />
+		<property name="user" value="${username.order}" />
+		<property name="password" value="${password.order}" />
+		
+		<property name="maxPoolSize" value="30" />
+		<property name="minPoolSize" value="1" />
+		<property name="autoCommitOnClose" value="true" />
+		<property name="checkoutTimeout" value="50000" />
+		<property name="initialPoolSize" value="1" />
+		<property name="maxIdleTime" value="25000" />
+		<property name="acquireIncrement" value="5" />
+		<property name="maxIdleTimeExcessConnections" value="1800" />
+		<property name="maxStatements" value="0" />
+		<property name="maxStatementsPerConnection" value="0" />
+	</bean>
+
+    <bean id="sqlSessionFactoryOrder" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="mapperLocations" value="classpath*:/com/jiutong/orderpay/manage/dao/*/*/*.xml"></property>	
+        <property name="dataSource" ref="dataSourceOrderAdmin" />
+    </bean>
+    
+     <bean name="transactionManagerOrderPayAdmin" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">     
+          <property name="dataSource" ref="dataSourceOrderAdmin"></property>
+    </bean>     
+  
+	  <tx:advice id="txAdviceOrderPayAdmin" transaction-manager="transactionManagerOrderPayAdmin">
+	    <tx:attributes>
+	      <tx:method name="delete*" propagation="REQUIRED" read-only="false" timeout="10000" />
+	      <tx:method name="do*" propagation="REQUIRED" read-only="false"  timeout="10000"/>
+	      <tx:method name="save*" propagation="REQUIRED" read-only="false"  timeout="10000"/>
+	      <tx:method name="update*" propagation="REQUIRED" read-only="false"  timeout="10000"/>
+	      <tx:method name="find*" propagation="REQUIRED" timeout="10000"/>
+	      <tx:method name="get*" propagation="REQUIRED" timeout="10000"/>
+	      <tx:method name="select*" propagation="REQUIRED" timeout="10000"/>
+	    </tx:attributes>
+	  </tx:advice>
+  
+	  <aop:config>
+	    <aop:pointcut id="pcOrderPayAdmin" expression="execution(public * com.jiutong.orderpay.manage.service.*.*.*(..))" /> <!--把事务控制在Service层-->
+	    <aop:advisor pointcut-ref="pcOrderPayAdmin" advice-ref="txAdviceOrderPayAdmin" />
+	  </aop:config>
+    
+</beans>

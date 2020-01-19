@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="MoneyIOLog">
+
+	<select id="selectMoneyIOLogs" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select * from moneyiolog where source = #{source}
+
+		<if test="tradeNo != null">
+			and tradeNo = #{tradeNo}
+		</if>
+		<if test="payerList != null">
+			and payerGuid in
+			<foreach collection="payerList" item="guid" open="(" close=")"
+				separator=",">
+				#{guid}
+			</foreach>
+		</if>
+		<if test="receiverList != null">
+			and receiverGuid in
+			<foreach collection="receiverList" item="guid" open="("
+				close=")" separator=",">
+				#{guid}
+			</foreach>
+		</if>
+		<if test="type != null">
+			and type = #{type}
+		</if>
+		<if test="payType != null">
+			and payType = #{payType}
+		</if>
+		<if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(createDT,'%Y-%m-%d') >= #{startDT} and
+			#{endDT} >= DATE_FORMAT(createDT,'%Y-%m-%d')
+		</if>
+		order by createDT desc
+		limit #{page},#{pageSize}
+	</select>
+
+	<insert id="saveMoneyIOLog" parameterType="java.util.Map">
+		insert into moneyiolog
+		(tradeNo,amount,type,payType,payerGuid,receiverGuid,source) values
+		(#{tradeNo},#{amount},#{type},#{payType},#{payerGuid},#{receiverGuid},#{source})
+	</insert>
+
+</mapper>

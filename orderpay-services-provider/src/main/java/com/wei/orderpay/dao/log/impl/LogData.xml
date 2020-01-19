@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="LogDataCommon">
+
+	<!-- 保存 -->
+	<insert id="saveLogData" parameterType="com.wei.orderpay.bean.log.LogDataBean">
+		INSERT INTO logdata (
+		source,
+		logType,
+		<if test="remark != null and remark != ''">
+			remark,
+		</if>
+		resourceID
+		) VALUES (
+		#{source},
+		#{logType},
+		<if test="remark != null and remark != ''">
+			#{remark},
+		</if>
+		#{resourceID}
+		)
+	</insert>
+
+</mapper>
+
+

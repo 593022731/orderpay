@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="ExtractAmountLogCommon" >
+	
+	<!-- 保存 -->
+	<insert id="saveExtractAmountLog" parameterType="com.wei.orderpay.bean.user.ExtractAmountLogBean" >
+		INSERT INTO extractamountlog (
+			source,
+			guid,
+			bankCardID,
+			extractAmount,
+			tradeNo,
+			status
+		) VALUES (
+			#{source},
+			#{guid},
+			#{bankCardID},
+			#{extractAmount},
+			#{tradeNo},
+			#{status}
+		)
+		<selectKey keyProperty="id" resultType="INTEGER">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<!-- 提现成功 -->
+	<update id="extractamountSuccess" parameterType="java.util.Map">
+		update extractamountlog set status = 1,extractDT=now() where source  = #{source} and id = #{id} and status != 1
+	</update>
+	
+	<!-- 提现失败 -->
+	<update id="extractamountFail" parameterType="java.util.Map">
+		update extractamountlog set status = 2,extractDT=0 where source  = #{source} and id = #{id}
+	</update>
+	
+	<!-- 获取提现记录 -->
+	<select id="getExtractAmountLogDetail" parameterType="com.wei.orderpay.bean.user.ExtractAmountLogBean" resultType="com.wei.orderpay.bean.user.ExtractAmountLogBean" >
+		select * from extractamountlog where id = #{id} and source = #{source} for update
+	</select>
+	
+	<select id="getExtractAmountList" parameterType="java.util.Map" resultType="java.util.HashMap"><!-- 余额为(c.balance+a.extractAmount)，表示提现前 -->
+		SELECT a.*,b.name,b.cardNo,(100 * c.balance +100 * a.extractAmount)/100 as balance,c.recordCode FROM extractamountlog a,bankcard b,useraccounttransactionlog c 
+		WHERE a.source = #{source} AND a.bankcardID = b.bankCardID AND a.id = c.resourceID
+		<if test="status != null">
+			AND a.status = #{status}
+		</if>
+		<if test="guidList != null">
+			AND a.guid IN 
+			<foreach item="item" collection="guidList"  open="(" close=")" separator="," index="">
+				#{item}
+			</foreach>
+		</if>
+		<if test="startDT != null and endDT != null">
+			AND DATE_FORMAT(a.createDT,'%Y-%m-%d') >= #{startDT} and #{endDT} >= DATE_FORMAT(a.createDT,'%Y-%m-%d')
+		</if>
+	
+		<if test="bankcardAccountName != null">
+		 	AND b.NAME LIKE CONCAT('%',#{bankcardAccountName},'%')
+		 </if>
+		<if test="bankcardNo > 0">
+		 	AND b.cardNo = #{bankcardNo}
+		 </if>
+
+		<if test="recordCode != null">
+			AND c.recordCode = #{recordCode}
+		</if>
+		<if test="tradeNo != null">
+			AND a.tradeNo = #{tradeNo}
+		</if>
+		AND a.id = c.resourceID AND c.userAccountTransactionType = #{userAccountTransactionType}
+			ORDER BY a.createDT DESC
+			LIMIT #{page},#{pageSize}
+	</select>
+</mapper>

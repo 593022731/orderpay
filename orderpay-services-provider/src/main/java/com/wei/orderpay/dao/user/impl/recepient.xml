@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="RecepientCommon" >
+	
+	<!-- 保存 -->
+	<insert id="saveRecepient" parameterType="com.wei.orderpay.bean.user.RecepientBean" >
+		INSERT INTO recepient (
+			guid,
+			source,
+			areaID,
+			mobile,
+			detail,
+			name
+		) VALUES (
+			#{guid},
+			#{source},
+			#{areaID},
+			#{mobile},
+			#{detail},
+			#{name}
+		)
+	</insert>
+	
+	<select id="getRecepientByID" resultType="com.wei.orderpay.bean.user.RecepientBean">
+		SELECT * FROM recepient WHERE source = #{source} AND recepientID = #{recepientID}
+	</select>
+	
+	<select id="getUserRecepientsByUID" resultType="com.wei.orderpay.bean.user.RecepientBean">
+		SELECT * FROM recepient WHERE source = #{source} AND guid = #{guid} AND isDeleted = 0 AND isArchived = 0   <!-- 没有删除也没有归档 -->
+	</select>
+
+	<update id="updateRecepient" parameterType="com.wei.orderpay.bean.user.RecepientBean">
+		UPDATE recepient SET
+			recepientID = #{recepientID}
+			<if test="isArchived > 0" >
+	      		,isArchived = #{isArchived}
+	      	</if>
+			<if test="isDeleted > 0" >
+	      		,isDeleted = #{isDeleted}
+	      	</if>
+		WHERE source = #{source} AND recepientID = #{recepientID}
+	</update>
+</mapper>

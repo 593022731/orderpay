@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+
+<mapper namespace="OrderPayLogCommon">
+
+	<!-- 保存 -->
+	<insert id="save" parameterType="java.util.Map">
+		INSERT INTO orderpaylog (
+			orderPayCode,
+			source,
+			payType,
+			totalFee,
+			payDT,
+			tradeNo
+		) VALUES (
+			#{orderPayCode},
+			#{source},
+			#{payType},
+			#{totalFee},
+			#{payDT},
+			#{tradeNo}
+		)
+	</insert>
+	
+	<!-- 根据订单支付号获取交易号 -->
+	<select id="getTradeNo" parameterType="java.util.Map" resultType="java.lang.String">
+		select tradeNo from orderpaylog where orderPayCode = #{orderPayCode} and source = #{source}
+	</select>
+	
+	<!-- 根据交易号获取订单ID -->
+	<select id="getOrderIDByTradeNo" parameterType="java.util.Map" resultType="java.lang.Integer">
+		 SELECT o.orderID FROM orderpaylog l,orders o WHERE l.orderPayCode = o.orderPayCode AND l.tradeNO = #{tradeNO} and l.source = #{source}
+	</select>
+	
+</mapper>

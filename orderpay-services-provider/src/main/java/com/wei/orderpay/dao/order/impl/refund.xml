@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="RefundCommon" >
+	
+	<!-- 保存 -->
+	<insert id="saveRefund" parameterType="com.wei.orderpay.bean.order.RefundBean" >
+		INSERT INTO refund (
+			orderID,
+			guid,
+			amount,
+			refundType,
+			goodStatus,
+			<if test="reason != null">
+			reason,
+			</if>
+			<if test="voucherPics != null">
+			voucherPics,
+			</if>
+			source
+		) VALUES (
+			#{orderID},
+			#{guid},
+			#{amount},
+			#{refundType},
+			#{goodStatus},
+			<if test="reason != null">
+			#{reason},
+			</if>
+			<if test="voucherPics != null">
+			#{voucherPics},
+			</if>
+			#{source}
+		)
+	</insert>
+	
+	<!-- 同意退款 -->
+	<update id="agreeRefund" parameterType="com.wei.orderpay.bean.order.RefundBean">
+		UPDATE refund SET agree=1,agreeDT=#{agreeDT} WHERE source = #{source} AND orderID=#{orderID} and guid = #{guid}
+	</update>
+	
+	<!-- 客服驳回退款 -->
+	<update id="rejectRefund" parameterType="com.wei.orderpay.bean.order.RefundBean">
+		UPDATE refund SET agree=2,customerID=#{customerID},customUpdateDT=#{customUpdateDT}
+		<if test="rejectRefundReason != null">
+			,rejectRefundReason=#{rejectRefundReason}
+			</if>
+		 WHERE source = #{source} AND orderID=#{orderID} and guid = #{guid}
+	</update>
+	
+	<!-- 退款成功 -->
+	<update id="refundSuccess" parameterType="java.util.Map">
+		UPDATE refund SET flag=1 WHERE source = #{source} AND id=#{id}
+	</update>
+	
+	<!-- 获取未退款成功的支付宝订单(支付宝需要手动退款)-->
+	<select id="getAliRefundOrders" parameterType="java.lang.Integer" resultType="com.wei.orderpay.bean.order.RefundBean">
+		select * from refund where source = #{source} AND flag=0
+	</select>
+	
+	<select id="queryRefundReason" parameterType="java.util.Map" resultType="com.wei.orderpay.bean.order.RefundBean">
+		SELECT
+			*
+		FROM
+			refund
+		WHERE
+			orderID = #{orderID}
+		AND source = #{source}
+	</select>
+	
+	
+</mapper>

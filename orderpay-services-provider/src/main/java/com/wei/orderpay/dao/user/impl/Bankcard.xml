@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="BankcardCommon">
+
+	<!-- 保存 -->
+	<insert id="saveBankcard" parameterType="com.wei.orderpay.bean.user.BankcardBean">
+		INSERT INTO bankcard (
+		guid,
+		bankType,
+		name,
+		cardNo,
+		identityNumber,
+		provinceName,
+		cityName,
+		source,
+		mobile
+		) VALUES (
+		#{guid},
+		#{bankType},
+		#{name},
+		#{cardNo},
+		#{identityNumber},
+		#{provinceName},
+		#{cityName},
+		#{source},
+		#{mobile}
+		)
+		<selectKey keyProperty="id" resultType="INTEGER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<select id="getBankcardList" resultType="com.wei.orderpay.bean.user.BankcardBean">
+		SELECT * FROM bankcard WHERE source = #{source} AND guid = #{guid} and isdelete = 0 
+	</select>
+	<!-- 逻辑删除银行卡 -->
+	<update id="deleteBandcard" >
+		update bankcard set isdelete = 1 where  bankCardID=#{bankCardID} and source=#{source} and guid=#{guid} 
+	</update>
+
+	<select id="getBankcardDetail" resultType="com.wei.orderpay.bean.user.BankcardBean">
+		SELECT * FROM bankcard WHERE source = #{source} AND guid = #{guid} and bankCardID = #{bankCardID} 
+	</select>
+	<select id="getGuidListByBankcardNoOrName" parameterType="java.util.Map" resultType="java.lang.Integer">
+		SELECT guid FROM bankcard WHERE source= #{source}
+		<if test="name != null">
+			AND name like concat('%',#{name},'%')
+		</if>
+		<if test="bankcardNo > 0">
+			AND cardNo = #{bankcardNo}
+		</if>
+	</select>
+</mapper>
+
+

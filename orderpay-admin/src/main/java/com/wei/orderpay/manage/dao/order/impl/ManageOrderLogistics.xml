@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="OrderLogisticsCommon" >
+	
+	<!--根据OrderID 查询 物流信息 -->
+	<select id="getOrderLogisticsByOrderID" parameterType="java.util.Map" resultType="OrderLogisticsBean">
+		select * from orderlogistics where orderID = #{orderID} AND  source = #{source}
+	</select>
+	
+</mapper>

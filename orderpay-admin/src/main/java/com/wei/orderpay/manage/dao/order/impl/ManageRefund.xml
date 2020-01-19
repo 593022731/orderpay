@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+<mapper namespace="RefundCommon" >
+	
+	<!-- 客服驳回退款 -->
+	<update id="rejectRefund" parameterType="RefundBean">
+		UPDATE refund SET agree=2,customerID=#{customerID},customUpdateDT=#{customUpdateDT}
+		<if test="rejectRefundReason != null">
+			,rejectRefundReason=#{rejectRefundReason}
+			</if>
+		 WHERE source = #{source} AND orderID=#{orderID} and guid = #{guid}
+	</update>
+	
+	<select id="queryRefundReason" parameterType="java.util.Map" resultType="RefundBean">
+		SELECT
+			*
+		FROM
+			refund
+		WHERE
+			orderID = #{orderID}
+		AND source = #{source}
+	</select>
+	
+	
+</mapper>
